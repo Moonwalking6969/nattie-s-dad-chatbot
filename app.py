@@ -3,8 +3,8 @@ import requests
 import json
 
 # Configuration - You can update these later
-OPENROUTER_API_KEY = "your-new-api-key-here"  # UPDATE THIS WITH YOUR NEW KEY
-MODEL_NAME = "meta-llama/llama-3.2-3b-instruct:free"
+OPENROUTER_API_KEY = st.secrets["OPENROUTER_API_KEY"]
+MODEL_NAME = st.secrets.get("MODEL_NAME")
 
 # Dad's personality and speech patterns
 PERSONALITY_DICT = {
