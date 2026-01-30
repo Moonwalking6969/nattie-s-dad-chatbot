@@ -2,9 +2,15 @@ import streamlit as st
 import requests
 import json
 
-# Configuration - You can update these later
-OPENROUTER_API_KEY = "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"  # Add your OpenRouter API key
-MODEL_NAME = "meta-llama/llama-3.2-3b-instruct:free"  # Add your chosen model name
+# Configuration using Streamlit secrets (for deployment)
+# For local testing, it will fall back to the hardcoded values
+try:
+    OPENROUTER_API_KEY = st.secrets["OPENROUTER_API_KEY"]
+    MODEL_NAME = st.secrets.get("MODEL_NAME", "meta-llama/llama-3.2-3b-instruct:free")
+except:
+    # Fallback for local development
+    OPENROUTER_API_KEY = "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"
+    MODEL_NAME = "meta-llama/llama-3.2-3b-instruct:free"
 
 # Dad's personality and speech patterns
 PERSONALITY_DICT = {
@@ -86,8 +92,8 @@ def call_openrouter(messages):
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "http://localhost:8501",  # Optional but recommended
-        "X-Title": "Dad Chatbot"  # Optional but recommended
+        "HTTP-Referer": "https://your-app.streamlit.app",  # Update with your Streamlit app URL
+        "X-Title": "Dad Chatbot"
     }
     
     data = {
@@ -98,6 +104,23 @@ def call_openrouter(messages):
     try:
         response = requests.post(url, headers=headers, json=data)
         
+        if response.status_code == 401:
+            return """⚠️ Authentication Error (401) - User not found
+
+Your API key is invalid or expired. Here's how to fix it:
+
+1. Go to https://openrouter.ai/keys
+2. Create a NEW API key
+3. Copy the key (starts with sk-or-v1-...)
+4. Replace OPENROUTER_API_KEY in the code with your new key
+
+Make sure you:
+- Have an account at openrouter.ai
+- Your API key is active
+- You copied the ENTIRE key (they're long!)
+
+Need help? Check https://openrouter.ai/docs/quick-start"""
+        
         if response.status_code == 402:
             return """⚠️ Payment Required Error
 
@@ -107,12 +130,23 @@ This usually means:
 3. The model you selected isn't free
 
 Try these free models:
-- google/gemini-2.0-flash-exp:free
 - meta-llama/llama-3.2-3b-instruct:free
 - qwen/qwen-2-7b-instruct:free
 - mistralai/mistral-7b-instruct:free
+- nousresearch/hermes-3-llama-3.1-405b:free
 
 Go to https://openrouter.ai/settings/credits to add credits or check your balance."""
+        
+        if response.status_code == 404:
+            return f"""⚠️ Model Not Found (404)
+
+The model '{MODEL_NAME}' is not available. Try these working free models:
+- meta-llama/llama-3.2-3b-instruct:free
+- qwen/qwen-2-7b-instruct:free  
+- mistralai/mistral-7b-instruct:free
+- nousresearch/hermes-3-llama-3.1-405b:free
+
+Update the MODEL_NAME in the code and try again!"""
         
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"]
@@ -122,6 +156,12 @@ Go to https://openrouter.ai/settings/credits to add credits or check your balanc
         return f"Error: {str(e)}"
 
 # Streamlit UI
+st.set_page_config(
+    page_title="Animal Dad Chatbot",
+    page_icon="🐾",
+    layout="centered"
+)
+
 st.title("🐾 Animal Dad Chatbot")
 st.caption(f"Chatting with {ANIMAL_CHARACTER}")
 
@@ -168,12 +208,12 @@ with st.sidebar:
     
     st.divider()
     
-    st.subheader("Free Models to Try")
-    st.code("google/gemini-2.0-flash-exp:free", language=None)
+    st.subheader("Working Free Models")
     st.code("meta-llama/llama-3.2-3b-instruct:free", language=None)
     st.code("qwen/qwen-2-7b-instruct:free", language=None)
     st.code("mistralai/mistral-7b-instruct:free", language=None)
+    st.code("nousresearch/hermes-3-llama-3.1-405b:free", language=None)
     
     st.divider()
-    st.caption("💡 If you get a 402 error, you may need to add credits at openrouter.ai/settings/credits")
-    st.caption("Update the personality dictionary and animal character in the code to customize the bot!")
+    st.caption("💡 If you get errors, check openrouter.ai/models for current free models")
+    st.caption("Update the animal character in the code to customize!")
