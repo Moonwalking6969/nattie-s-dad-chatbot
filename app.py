@@ -157,12 +157,12 @@ Update the MODEL_NAME in the code and try again!"""
 
 # Streamlit UI
 st.set_page_config(
-    page_title="Animal Dad Chatbot",
+    page_title="Dadbot",
     page_icon="🐾",
     layout="centered"
 )
 
-st.title("🐾 Animal Dad Chatbot")
+st.title("🐾 Dadbot")
 st.caption(f"Chatting with {ANIMAL_CHARACTER}")
 
 # Initialize chat history
@@ -195,25 +195,3 @@ if prompt := st.chat_input("Say something..."):
     
     # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": response})
-
-# Sidebar with configuration info
-with st.sidebar:
-    st.header("Configuration")
-    st.write(f"**Character:** {ANIMAL_CHARACTER}")
-    st.write(f"**Model:** {MODEL_NAME}")
-    
-    if st.button("Clear Chat"):
-        st.session_state.messages = []
-        st.rerun()
-    
-    st.divider()
-    
-    st.subheader("Working Free Models")
-    st.code("meta-llama/llama-3.2-3b-instruct:free", language=None)
-    st.code("qwen/qwen-2-7b-instruct:free", language=None)
-    st.code("mistralai/mistral-7b-instruct:free", language=None)
-    st.code("nousresearch/hermes-3-llama-3.1-405b:free", language=None)
-    
-    st.divider()
-    st.caption("💡 If you get errors, check openrouter.ai/models for current free models")
-    st.caption("Update the animal character in the code to customize!")
