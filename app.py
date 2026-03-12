@@ -1,6 +1,9 @@
 import streamlit as st
 import requests
 import json
+from PIL import Image
+import urllib.request
+from io import BytesIO
 
 # Configuration - You can update these later
 OPENROUTER_API_KEY = st.secrets["OPENROUTER_API_KEY"]
@@ -41,6 +44,24 @@ PERSONALITY_DICT = {
 
 # Character description
 CHARACTER = "Neytiri, Na'vi warrior of the Omaticaya clan"
+
+# 👇 Paste a URL or local file path to a Neytiri image here
+AVATAR_IMAGE = "n.jpg"  # fallback emoji until you add an image
+
+def load_avatar(source, size=(40, 40)):
+    """Loads and resizes avatar image from a URL or local path. Falls back to emoji on failure."""
+    try:
+        if source.startswith("http://") or source.startswith("https://"):
+            with urllib.request.urlopen(source) as res:
+                img = Image.open(BytesIO(res.read())).convert("RGBA")
+        else:
+            img = Image.open(source).convert("RGBA")
+        img = img.resize(size, Image.LANCZOS)
+        return img
+    except Exception:
+        return AVATAR_IMAGE  # fall back to emoji if anything goes wrong
+
+AVATAR = load_avatar(AVATAR_IMAGE) if not AVATAR_IMAGE.startswith(tuple("🌿🎭🐾")) else AVATAR_IMAGE
 
 def create_system_prompt():
     """Creates the system prompt based on Neytiri's personality"""
@@ -188,7 +209,8 @@ if "messages" not in st.session_state:
 
 # Display chat history
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
+    avatar = AVATAR if message["role"] == "assistant" else None
+    with st.chat_message(message["role"], avatar=avatar):
         st.markdown(message["content"])
 
 # Chat input
@@ -205,7 +227,7 @@ if prompt := st.chat_input("Speak to Neytiri..."):
     api_messages.extend(st.session_state.messages)
 
     # Get bot response
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar=AVATAR):
         with st.spinner("The forest listens..."):
             response = call_openrouter(api_messages)
             st.markdown(response)
